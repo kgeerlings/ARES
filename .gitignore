@@ -1,0 +1,11 @@
+# Virtual environments
+env/
+ares_env/
+venv/
+.venv/
+
+# Diverse
+notes.txt
+**/__pycache__/
+__pycache__
+.pytest_cache/
