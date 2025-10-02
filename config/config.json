@@ -1,15 +1,25 @@
 {
     "env_config": {
-        "grid_size": [1200, 950],
-        "num_ennemies": 5,
-        "max_steps": 1000
+        "width": 1280,
+        "height": 720,
+        "background_color": [
+            255,
+            255,
+            255
+        ],
+        "max_n_steps": 1000
     },
     "ally_config": {
         "radius": 5,
         "color": [0, 255, 0]
     },
-    "ennemy_config": {
+    "enemy_config": {
         "radius": 5,
         "color": [255, 0, 0]
+    },
+    "target_config": {
+        "radius": 15,
+        "color": [0, 0, 255],
+        "position": [1175, 375]
     }
 }

@@ -5,4 +5,5 @@ with open("config/config.json") as f:
 
 env_config = config["env_config"]
 ally_config = config["ally_config"]
-ennemy_config = config["ennemy_config"]
+enemy_config = config["enemy_config"]
+target_config = config["target_config"]
