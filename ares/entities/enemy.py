@@ -1,8 +1,9 @@
-from ares.entities.drone import Drone
+from ares.entities.entity import Entity
 
-class Enemy(Drone):
+class Enemy(Entity):
     """PLACEHOLDER for scripted ennemy drone"""
 
     def __init__(self, enemy_config=None):
         super().__init__()
         self.config = enemy_config if enemy_config else {}
+        
