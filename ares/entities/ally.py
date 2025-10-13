@@ -26,3 +26,4 @@ class Ally(Entity):
         pass
         
 
+
