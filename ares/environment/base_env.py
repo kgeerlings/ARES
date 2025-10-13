@@ -43,7 +43,6 @@ class BaseEnv(gym.Env):
         self.enemies = [Enemy(self.enemy_config) for _ in range(self.env_config.get("num_enemies", 1))]
         self.target = Target(self.target_config)
 
-
     def _collides_with(self, entity_1: Entity, entity_2: Entity) -> bool:
         """
         Check if the entity_1 collides with the entity_2.
@@ -59,19 +58,6 @@ class BaseEnv(gym.Env):
         target_pos = entity_2.position
         distance = np.linalg.norm(agent_pos - target_pos)
         return distance < (entity_1.radius + entity_2.radius)
-    
-
-    # def _replace_if_collision(self, entity_1: Entity, entity_2: Entity) -> None:
-    #     """
-    #     Replace the entity_2 if it collides with the entity_1.
-
-    #     Args:
-    #         entity_1 (Entity): The entity to check for collision.
-    #         entity_2 (Entity): The entity to replace if a collision occurs.
-    #     """
-    #     if self._collides_with(entity_1, entity_2):
-    #         entity_2.position = np.random.uniform(low=0, high=[self.width, self.height])
-        
 
     def _reward_shape(self):
         """Define the shape of the reward."""
@@ -119,6 +105,8 @@ class BaseEnv(gym.Env):
         self.ally.reset()
         for enemy in self.enemies:
             enemy.reset()
+            if self._collides_with(enemy, self.target):
+                enemy.reset()
         self.target.reset()
 
         # Reset environment state
@@ -148,7 +136,7 @@ class BaseEnv(gym.Env):
         Returns:
             bool: True if the episode is terminated, False otherwise.
         """
-        self.terminated = self._collides_with(self.agent, self.target)
+        self.terminated = self._collides_with(self.ally, self.target)
         return self.terminated
 
     def _is_done(self):
@@ -186,6 +174,10 @@ class BaseEnv(gym.Env):
         self.ally.step(action)
         self.reward = self._reward_shape()
 
+        # Let the enemies take one step
+        for enemy in self.enemies:
+            enemy.step(self.ally.position)
+
         return self._get_observation(), self.reward, self.terminated, self.truncated, {}
     
     def close(self):
@@ -209,20 +201,22 @@ class BaseEnv(gym.Env):
         self.target.render(window)
 
         cv2.imshow(window_name, window)
-        if cv2.waitKey(0) & 0xFF == ord("q"):
+        if cv2.waitKey(1) & 0xFF == ord("q"):
             self.close()
 
     
 
 
 if __name__ == "__main__":
-    env = BaseEnv()
+    from config.config import config
+    env = BaseEnv(config)
     obs, info = env.reset()
     print("Initial observation:", obs)
     done = False
     env.render()
-    # while not done:
-    #     action = env.action_space.sample()  # Random action
-    #     obs, reward, terminated, truncated, info = env.step(action)
-    #     done = terminated or truncated
-    #     print(f"Step: {env.n_steps}, Action: {action}, Observation: {obs}, Reward: {reward}, Terminated: {terminated}, Truncated: {truncated}")
+    while not done:
+        action = env.action_space.sample()  # Random action
+        obs, reward, terminated, truncated, info = env.step(action)
+        done = terminated or truncated
+        env.render()
+        # print(f"Step: {env.n_steps}, Action: {action}, Observation: {obs}, Reward: {reward}, Terminated: {terminated}, Truncated: {truncated}")
