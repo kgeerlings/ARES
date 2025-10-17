@@ -1,46 +1,92 @@
-import gym
-import numpy as np
+import torch
+from collections import defaultdict
+from torch import optim as optim_pkg
 from tqdm import tqdm
-from ares.entities import Ally
+from torchrl.data import ReplayBuffer
+from torchrl.envs import ExplorationType, set_exploration_type
+from torchrl.modules import PPOActor, PPOLoss, ValueOperator, AdvantageModule
+from torchrl.collectors import SyncDataCollector
+from ares.environment.base_env import BaseEnv
 
-def train_agent_n_episodes(env : gym.Env, agent : Ally, n : int = 20, verbose_freq : int = None) -> dict:
-    """Train the agent for a number of episodes.
+logs = defaultdict(list)
+pbar = tqdm(total=total_frames)
+eval_str = ""
 
-    Args:
-        env (gym.Env): The environment to train the agent in.
-        agent (AgentRL): The agent to train.
-        n (int, optional): The number of episodes to train the agent for. Defaults to 20.
-        verbose_freq (int, optional): Episode frequency to print progress. If None, no progress is printed. Defaults to None.
+# We iterate over the collector until it reaches the total number of frames it was
+# designed to collect:
+for i, tensordict_data in enumerate(collector):
+    # we now have a batch of data to work with. Let's learn something from it.
+    for _ in range(num_epochs):
+        # We'll need an "advantage" signal to make PPO work.
+        # We re-compute it at each epoch as its value depends on the value
+        # network which is updated in the inner loop.
+        advantage_module(tensordict_data)
+        data_view = tensordict_data.reshape(-1)
+        replay_buffer.extend(data_view.cpu())
+        for _ in range(frames_per_batch // sub_batch_size):
+            subdata = replay_buffer.sample(sub_batch_size)
+            loss_vals = loss_module(subdata.to(device))
+            loss_value = (
+                loss_vals["loss_objective"]
+                + loss_vals["loss_critic"]
+                + loss_vals["loss_entropy"]
+            )
 
-    Returns:
-        dict: A dictionary containing the total rewards and steps taken in each episode.
-    """
-    results = {
-        "total_rewards": [],
-        "steps": [],
-    }
-    
-    # Training loop
-    for episode in tqdm(range(n)):
-        observation, info = env.reset()
-        total_reward = 0
-        step = 0
-        done = False
-        while not done:
-            action = agent.act(observation)
-            next_observation, reward, terminated, truncated, info = env.step(action)
-            done = terminated or truncated
-            total_reward += reward
-            agent.learn(observation, action, reward, next_observation, done)
-            step += 1
-            observation = next_observation
-        
-        # Log results
-        results["total_rewards"].append(total_reward)
-        results["steps"].append(step)
-        if verbose_freq is not None and (episode + 1) % verbose_freq == 0:
-            avg_reward = np.mean(results["total_rewards"][-verbose_freq:])
-            avg_steps = np.mean(results["steps"][-verbose_freq:])
-            print(f"Episode {episode + 1}/{n} - Average Reward: {avg_reward:.2f}, Average Steps: {avg_steps:.2f}")
-    
-    return results
+            # Optimization: backward, grad clipping and optimization step
+            loss_value.backward()
+            # this is not strictly mandatory but it's good practice to keep
+            # your gradient norm bounded
+            torch.nn.utils.clip_grad_norm_(loss_module.parameters(), max_grad_norm)
+            optim.step()
+            optim.zero_grad()
+
+    logs["reward"].append(tensordict_data["next", "reward"].mean().item())
+    pbar.update(tensordict_data.numel())
+    cum_reward_str = (
+        f"average reward={logs['reward'][-1]: 4.4f} (init={logs['reward'][0]: 4.4f})"
+    )
+    logs["step_count"].append(tensordict_data["step_count"].max().item())
+    stepcount_str = f"step count (max): {logs['step_count'][-1]}"
+    logs["lr"].append(optim.param_groups[0]["lr"])
+    lr_str = f"lr policy: {logs['lr'][-1]: 4.4f}"
+    if i % 10 == 0:
+        # We evaluate the policy once every 10 batches of data.
+        # Evaluation is rather simple: execute the policy without exploration
+        # (take the expected value of the action distribution) for a given
+        # number of steps (1000, which is our ``env`` horizon).
+        # The ``rollout`` method of the ``env`` can take a policy as argument:
+        # it will then execute this policy at each step.
+        with set_exploration_type(ExplorationType.DETERMINISTIC), torch.no_grad():
+            # execute a rollout with the trained policy
+            eval_rollout = env.rollout(1000, policy_module)
+            logs["eval reward"].append(eval_rollout["next", "reward"].mean().item())
+            logs["eval reward (sum)"].append(
+                eval_rollout["next", "reward"].sum().item()
+            )
+            logs["eval step_count"].append(eval_rollout["step_count"].max().item())
+            eval_str = (
+                f"eval cumulative reward: {logs['eval reward (sum)'][-1]: 4.4f} "
+                f"(init: {logs['eval reward (sum)'][0]: 4.4f}), "
+                f"eval step-count: {logs['eval step_count'][-1]}"
+            )
+            del eval_rollout
+    pbar.set_description(", ".join([eval_str, cum_reward_str, stepcount_str, lr_str]))
+
+    # We're also using a learning rate scheduler. Like the gradient clipping,
+    # this is a nice-to-have but nothing necessary for PPO to work.
+    scheduler.step()
+
+plt.figure(figsize=(10, 10))
+plt.subplot(2, 2, 1)
+plt.plot(logs["reward"])
+plt.title("training rewards (average)")
+plt.subplot(2, 2, 2)
+plt.plot(logs["step_count"])
+plt.title("Max step count (training)")
+plt.subplot(2, 2, 3)
+plt.plot(logs["eval reward (sum)"])
+plt.title("Return (test)")
+plt.subplot(2, 2, 4)
+plt.plot(logs["eval step_count"])
+plt.title("Max step count (test)")
+plt.show()
