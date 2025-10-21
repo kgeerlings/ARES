@@ -25,5 +25,24 @@
         "radius": 50,
         "color": [0, 255, 0],
         "position": [1175, 375]
+    },
+    "hyperparameters_and_setup": {
+        "max_grad_norm": 0.5,
+        "clip_epsilon": 0.2,
+        "entropy_coef": 0.0001,
+        "critic_coef": 0.5,
+        "loss_critic_type": "l2",
+        "normalize_advantage": true,
+        "gamma": 0.99,
+        "lmbda": 0.95,
+        "use_entropy_loss": true,
+        "learning_rate": 0.0001,
+        "num_epochs": 10,
+        "device": "cpu",
+        "num_cells": 64,
+        "num_cells_critic": 64,
+        "frames_per_batch": 1000,
+        "minibatch_size": 64,
+        "total_frames": 6000000
     }
 }

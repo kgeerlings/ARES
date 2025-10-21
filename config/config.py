@@ -7,3 +7,4 @@ env_config = config["env_config"]
 ally_config = config["ally_config"]
 enemy_config = config["enemy_config"]
 target_config = config["target_config"]
+hyperparameters_and_setup = config.get("hyperparameters_and_setup", {})
