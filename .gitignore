@@ -4,6 +4,10 @@ ares_env/
 venv/
 .venv/
 
+# Tensorboard
+runs/
+checkpoints/
+
 # Diverse
 notes.txt
 **/__pycache__/

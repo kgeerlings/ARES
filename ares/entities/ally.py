@@ -7,11 +7,20 @@ class Ally(Entity):
     def __init__(self, ally_config=None):
         super().__init__()
         self.config = ally_config if ally_config else {}
-        self.position = np.array(self.config.get("start_position", [100, 100]))
+        # self.position = np.array(self.config.get("start_position", [100, 100]), dtype=np.float32)
+        # random position
+        self.position = np.array([
+            np.random.uniform(100, 1175),
+            np.random.uniform(100, 650)
+        ], dtype=np.float32)
         self.color = self.config.get("color", [0, 255, 0])
 
     def reset(self):
-        self.position = np.array(self.config.get("start_position", [100, 100]))
+        # self.position = np.array(self.config.get("start_position", [100, 100]), dtype=np.float32)
+        self.position = np.array([
+            np.random.uniform(100, 1175),
+            np.random.uniform(100, 650)
+        ], dtype=np.float32)
 
     def step(self, action):
         """
@@ -20,10 +29,15 @@ class Ally(Entity):
         Args:
             action (np.ndarray): Array containing angle (radians) and velocity.
         """
-        # angle, velocity = action
-        # direction = np.array([np.cos(angle), np.sin(angle)])
-        # self.position += direction * velocity
-        pass
+        action = np.asarray(action, dtype=np.float32)
+        angle, velocity = action
+
+        angle = angle * 2 * np.pi  # Convert normalized angle [0,1] to radians [0, 2π]
+        velocity = velocity * 10
+
+        dx = velocity * np.cos(angle)
+        dy = velocity * np.sin(angle)
+        self.position += np.array([dx, dy], dtype=np.float32)
         
 
 

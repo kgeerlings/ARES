@@ -32,9 +32,13 @@ class BaseEnv(gym.Env):
         self.max_n_steps = 1000
         self.reward = 0
 
+        # For reward shaping
+        self.prev_distance = None
+        self.prev_angle = None
+
         # Spaces
-        self.action_space = Box(low=0.0, high=1.0, shape=(2,), dtype=float) # Two action (angle and velocity)
-        self.observation_space = Box(low=-1.0, high=1.0, shape=(2,), dtype=float) # Determine the shape according to the observations decided
+        self.action_space = Box(low=0.0, high=1.0, shape=(2,), dtype=np.float32) # Two action (angle and velocity)
+        self.observation_space = Box(low=-1.0, high=1.0, shape=(2,), dtype=np.float32) # Determine the shape according to the observations decided
         # For the first version, two observations: pos_to_target (dist), angle_to_target
         # Maybe for the observations: pos_to_target, angle_to_target, bool_target_reached, pos_to_base, angle_to_base, pos_to_enemy_1, pos_to_enemy_2, pos_to_enemy_3
 
@@ -61,8 +65,18 @@ class BaseEnv(gym.Env):
 
     def _reward_shape(self):
         """Define the shape of the reward."""
-        # PLACEHOLDER
-        pass
+
+        # Distance difference
+        dist_to_target = np.linalg.norm(self.ally.position - self.target.position)
+        distance_difference = self.prev_distance - dist_to_target if self.prev_distance is not None else 0
+        self.prev_distance = dist_to_target
+
+        distance_max = np.linalg.norm(np.array([self.width, self.height]))
+
+        normalized_distance_difference = distance_difference / distance_max
+
+        return normalized_distance_difference
+
 
     def _get_observation(self):
         """
@@ -114,8 +128,8 @@ class BaseEnv(gym.Env):
         self.terminated = False
         self.n_steps = 0
         self.reward = 0
-
-        # RESET REWARD UTILS (dist_to_target, etc...)
+        self.prev_distance = None
+        self.prev_angle = None
 
         return self._get_observation(), {}
 

@@ -1,6 +1,5 @@
 import torch
 import os
-import numpy as np
 from tensordict import TensorDict
 from torchrl.envs.utils import set_exploration_type, ExplorationType
 from ares.environment.base_env import BaseEnv
@@ -86,7 +85,7 @@ def evaluate_agent(policy, num_episodes=5, max_steps=500, render=True):
             # Afficher les infos périodiquement
             if step_count == 1 or step_count % 10 == 0:
                 print(
-                    f"Step {step_count}: Reward = {reward:.2f}, Total Reward = {total_reward:.2f}, max_reward_observed = {env.max_reward_observed:.2f}"
+                    f"Step {step_count}: Reward = {reward:.2f}, Total Reward = {total_reward:.2f}"
                 )
 
         print(
@@ -96,7 +95,7 @@ def evaluate_agent(policy, num_episodes=5, max_steps=500, render=True):
 
 
 if __name__ == "__main__":
-    checkpoint_path = "models/agent_go_to_target.pt"
+    checkpoint_path = "checkpoints/checkpoint_iter_400.pt"
     checkpoint = load_checkpoint(checkpoint_path, policy)
 
     if checkpoint is not None:

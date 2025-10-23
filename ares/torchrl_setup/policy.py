@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 from tensordict.nn import TensorDictModule
+from tensordict.nn import TensorDictSequential
 from torchrl.modules import ProbabilisticActor, TanhNormal
 from ares.torchrl_setup.environment import env
 from ares.torchrl_setup.hyperparameters_and_setup import num_cells, device
@@ -38,7 +39,6 @@ split_module = TensorDictModule(
     in_keys=["params"],
     out_keys=["loc", "scale"],
 )
-from tensordict.nn import TensorDictSequential
 
 # Combiner les modules
 combined_module = TensorDictSequential(policy_module, split_module)
@@ -48,7 +48,7 @@ combined_module = TensorDictSequential(policy_module, split_module)
 policy = ProbabilisticActor(
     module=combined_module,
     in_keys=["loc", "scale"],
-    out_keys=["action", "sample_log_prob"],
+    out_keys=["action"],
     distribution_class=TanhNormal,
     return_log_prob=True,
     spec=env.action_spec,
