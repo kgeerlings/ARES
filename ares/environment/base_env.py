@@ -98,7 +98,6 @@ class BaseEnv(gym.Env):
     def _reward_shape(self):
         """Define the shape of the reward based on the current state."""
         if self.ally_reached_target:
-            print("Target reached, returning to base area.")
             return self._reward_shape_returning_to_base()
         else:
             return self._reward_shape_reaching_target()
@@ -138,13 +137,13 @@ class BaseEnv(gym.Env):
                                      self.base_area.position[0] - self.ally.position[0])
         normalized_angle_to_base = (angle_to_base + np.pi) / (2 * np.pi)
 
-        # If the agent is reaching the target, the distance and angle to the base are -1.0, if he reached the target, the distance and angle to the target are -1.0
-        if not self.ally_reached_target:
-            normalized_dist_to_base = -1.0
-            normalized_angle_to_base = -1.0
-        else:
-            normalized_dist_to_target = -1.0
-            normalized_angle_to_target = -1.0
+        # # If the agent is reaching the target, the distance and angle to the base are -1.0, if he reached the target, the distance and angle to the target are -1.0
+        # if not self.ally_reached_target:
+        #     normalized_dist_to_base = -1.0
+        #     normalized_angle_to_base = -1.0
+        # else:
+        #     normalized_dist_to_target = -1.0
+        #     normalized_angle_to_target = -1.0
 
         return np.array([normalized_dist_to_target, normalized_angle_to_target, self.ally_reached_target,
                          normalized_dist_to_base, normalized_angle_to_base], dtype=np.float32)
@@ -181,6 +180,7 @@ class BaseEnv(gym.Env):
         self.reward = 0
         self.prev_distance = None
         self.prev_angle = None
+        self.ally_reached_target = False
 
         return self._get_observation(), {}
 

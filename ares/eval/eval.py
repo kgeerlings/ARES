@@ -94,13 +94,13 @@ def evaluate_agent(policy, num_episodes=5, max_steps=500, render=True):
 
 
 if __name__ == "__main__":
-    checkpoint_path = "checkpoints/checkpoint_iter_1200.pt"
+    checkpoint_path = "checkpoints/checkpoint_iter_5900.pt"
     # checkpoint_path = "ares/models/1_ally_go_to_target.pt"
     checkpoint = load_checkpoint(checkpoint_path, policy)
 
     if checkpoint is not None:
         print("Début de l'évaluation...")
-        evaluate_agent(policy=policy, num_episodes=3, max_steps=1000, render=True)
+        evaluate_agent(policy=policy, num_episodes=5, max_steps=1000, render=True)
         print("Évaluation terminée!")
     else:
         print("Impossible de charger le modèle.")
