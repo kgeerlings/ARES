@@ -95,7 +95,7 @@ def evaluate_agent(policy, num_episodes=5, max_steps=500, render=True):
 
 
 if __name__ == "__main__":
-    checkpoint_path = "checkpoints/checkpoint_iter_400.pt"
+    checkpoint_path = "checkpoints/checkpoint_iter_5900.pt"
     checkpoint = load_checkpoint(checkpoint_path, policy)
 
     if checkpoint is not None:
