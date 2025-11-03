@@ -28,7 +28,7 @@ from ares.torchrl_setup.hyperparameters_and_setup import (
 
 # Callbacks
 current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-log_dir = f"runs/ares_runs_go_to_target/run_{current_time}"
+log_dir = f"runs/ares_runs_target_then_base/run_{current_time}"
 writer = SummaryWriter(log_dir)
 logs = defaultdict(list)
 
@@ -100,11 +100,25 @@ for iteration, batch in enumerate(collector):
     terminated_count = batch["next", "terminated"].sum().item()
     truncated_count = batch["next", "truncated"].sum().item()
 
+    # Count episodes where ally reached target
+    # Assuming the observation contains ally_reached_target at index 2
+    ally_reached_target_count = batch["next", "observation"][:, 2].sum().item()
+
+    # Calculate explained variance
+    with torch.no_grad():
+        values = batch["state_value"].flatten()
+        returns = batch["value_target"].flatten()
+        var_returns = returns.var()
+        explained_var = 1 - (returns - values).var() / (var_returns + 1e-8)
+        explained_var = explained_var.item()
+
     logs["reward"].append(reward_mean)
     logs["lr"].append(current_lr)
     logs["done_count"].append(done_count)
     logs["terminated_count"].append(terminated_count)
     logs["truncated_count"].append(truncated_count)
+    logs["ally_reached_target_count"].append(ally_reached_target_count)
+    logs["explained_variance"].append(explained_var)
 
     # Logging TensorBoard
     writer.add_scalar("Training/Reward_Mean", reward_mean, iteration)
@@ -117,6 +131,12 @@ for iteration, batch in enumerate(collector):
     writer.add_scalar(
         "Training/Truncated_Count", truncated_count, iteration
     )  # Number of successes
+    writer.add_scalar(
+        "Training/Ally_Reached_Target_Count", ally_reached_target_count, iteration
+    )  # Number of times ally reached target
+    writer.add_scalar(
+        "Training/Explained_Variance", explained_var, iteration
+    )  # Explained variance of value function
 
     # Record env for evaluation
     # if iteration % 10 == 0:

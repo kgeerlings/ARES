@@ -5,8 +5,6 @@ from torchrl.envs.utils import set_exploration_type, ExplorationType
 from ares.environment.base_env import BaseEnv
 from config.config import config
 import time
-
-# Importer seulement les définitions nécessaires du training_pipeline
 from ares.torchrl_setup.policy import policy
 from ares.torchrl_setup.hyperparameters_and_setup import device
 
@@ -73,7 +71,7 @@ def evaluate_agent(policy, num_episodes=5, max_steps=500, render=True):
                 try:
                     env.render()
                     time.sleep(0.01)  # Pause for rendering
-                except:
+                except:  # noqa: E722
                     pass
 
             # Make a step
@@ -87,6 +85,7 @@ def evaluate_agent(policy, num_episodes=5, max_steps=500, render=True):
                 print(
                     f"Step {step_count}: Reward = {reward:.2f}, Total Reward = {total_reward:.2f}"
                 )
+                print(f"Observation: {obs}")
 
         print(
             f"Épisode terminé: {step_count} steps, Récompense totale: {total_reward:.2f}"
@@ -95,7 +94,8 @@ def evaluate_agent(policy, num_episodes=5, max_steps=500, render=True):
 
 
 if __name__ == "__main__":
-    checkpoint_path = "checkpoints/checkpoint_iter_5900.pt"
+    checkpoint_path = "checkpoints/checkpoint_iter_1200.pt"
+    # checkpoint_path = "ares/models/1_ally_go_to_target.pt"
     checkpoint = load_checkpoint(checkpoint_path, policy)
 
     if checkpoint is not None:

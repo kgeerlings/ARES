@@ -9,18 +9,20 @@ class Ally(Entity):
         self.config = ally_config if ally_config else {}
         # self.position = np.array(self.config.get("start_position", [100, 100]), dtype=np.float32)
         # random position
-        self.position = np.array([
+        self.init_position = np.array([
             np.random.uniform(100, 1175),
             np.random.uniform(100, 650)
         ], dtype=np.float32)
+        self.position = self.init_position.copy()
         self.color = self.config.get("color", [0, 255, 0])
 
     def reset(self):
         # self.position = np.array(self.config.get("start_position", [100, 100]), dtype=np.float32)
-        self.position = np.array([
+        self.init_position = np.array([
             np.random.uniform(100, 1175),
             np.random.uniform(100, 650)
         ], dtype=np.float32)
+        self.position = self.init_position.copy()
 
     def step(self, action):
         """
