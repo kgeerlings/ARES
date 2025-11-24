@@ -39,11 +39,11 @@ class BaseEnv(gym.Env):
 
         # Spaces
         self.action_space = Box(low=0.0, high=1.0, shape=(2,), dtype=np.float32) # Two action (angle and velocity)
-        self.observation_space = Box(low=-1.0, high=1.0, shape=(5,), dtype=np.float32) # Determine the shape according to the observations decided
+        self.observation_space = Box(low=-1.0, high=1.0, shape=(7,), dtype=np.float32) # Determine the shape according to the observations decided
         # For the first version, two observations: pos_to_target (dist), angle_to_target
         # For the second version, wee add three observations: bool_target_reached, pos_to_base, angle_to_base
         self.ally_reached_target = False
-        # Maybe for the observations: pos_to_target, angle_to_target, bool_target_reached, pos_to_base, angle_to_base, pos_to_enemy_1, pos_to_enemy_2, pos_to_enemy_3
+        # For the third version, we add two observations: pos_to_enemy_1, pos_to_enemy_2
 
         # Entities
         self.ally = Ally(self.ally_config)
@@ -95,12 +95,25 @@ class BaseEnv(gym.Env):
 
         return normalized_distance_difference
     
+    def _reward_shape_for_enemies_avoidance(self):
+        """Define the shape of the reward for avoiding enemies.
+        If an enemy is closer to the ally than 300 pixels, the reward is negative.
+        The farther the enemy is, the higher the reward."""
+        reward = 0
+        for enemy in self.enemies:
+            dist_to_enemy = np.linalg.norm(self.ally.position - enemy.position)
+            if dist_to_enemy < 300:
+                reward -= (300 - dist_to_enemy) / 300  # Negative reward when too close
+            if dist_to_enemy < self.ally.radius + enemy.radius:
+                reward -= 1  # Collision penalty
+        return reward / len(self.enemies)  # Average reward over all enemies
+    
     def _reward_shape(self):
         """Define the shape of the reward based on the current state."""
         if self.ally_reached_target:
-            return self._reward_shape_returning_to_base()
+            return self._reward_shape_returning_to_base()+self._reward_shape_for_enemies_avoidance()
         else:
-            return self._reward_shape_reaching_target()
+            return self._reward_shape_reaching_target()+self._reward_shape_for_enemies_avoidance()
 
     def _get_observation(self):
         """
@@ -137,16 +150,16 @@ class BaseEnv(gym.Env):
                                      self.base_area.position[0] - self.ally.position[0])
         normalized_angle_to_base = (angle_to_base + np.pi) / (2 * np.pi)
 
-        # # If the agent is reaching the target, the distance and angle to the base are -1.0, if he reached the target, the distance and angle to the target are -1.0
-        # if not self.ally_reached_target:
-        #     normalized_dist_to_base = -1.0
-        #     normalized_angle_to_base = -1.0
-        # else:
-        #     normalized_dist_to_target = -1.0
-        #     normalized_angle_to_target = -1.0
+        # === Third model ===
+        enemy_distances = []
+        for enemy in self.enemies:
+            dist_to_enemy = np.linalg.norm(self.ally.position - enemy.position)
+            normalized_dist_to_enemy = dist_to_enemy / distance_max
+            enemy_distances.append(normalized_dist_to_enemy)
 
         return np.array([normalized_dist_to_target, normalized_angle_to_target, self.ally_reached_target,
-                         normalized_dist_to_base, normalized_angle_to_base], dtype=np.float32)
+                        normalized_dist_to_base, normalized_angle_to_base] + enemy_distances, dtype=np.float32)
+                        
 
     def reset(self, seed: int = None):
         """
@@ -249,7 +262,7 @@ class BaseEnv(gym.Env):
         """Close the environment."""
         cv2.destroyAllWindows()
 
-    def render(self, mode: str = "rgb_array"):
+    def render(self, mode: str = "human"):
         """
         Render the environment.
 
@@ -266,9 +279,24 @@ class BaseEnv(gym.Env):
         self.target.render(window)
         self.base_area.render(window)
 
-        cv2.imshow(window_name, window)
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            self.close()
+        if mode == "rgb_array":
+            # Convert BGR (OpenCV) to RGB and return the array
+            rgb_array = cv2.cvtColor(window, cv2.COLOR_BGR2RGB)
+            return rgb_array
+        elif mode == "human":
+            # Display the window for human viewing
+            cv2.namedWindow(window_name)
+            cv2.imshow(window_name, window)
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                self.close()
+            return None
+        else:
+            # Default behavior (for backward compatibility)
+            cv2.namedWindow(window_name)
+            cv2.imshow(window_name, window)
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                self.close()
+            return None
 
     
 
