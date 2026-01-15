@@ -28,7 +28,7 @@ from ares.torchrl_setup.hyperparameters_and_setup import (
 
 # Callbacks
 current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-log_dir = f"runs/ares_runs_target_then_base/run_{current_time}"
+log_dir = f"runs/ares_runs_ally_dodges_enemies/run_{current_time}"
 writer = SummaryWriter(log_dir)
 logs = defaultdict(list)
 
