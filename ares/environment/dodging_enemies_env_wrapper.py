@@ -84,11 +84,7 @@ class DodgingEnemiesEnvWrapper(GoAndReturnEnvWrapper):
             dist_to_enemy = np.linalg.norm(self.ally.position - enemy.position)
             normalized_dist_to_enemy = dist_to_enemy / distance_max
 
-            # angle_to_enemy = np.arctan2(enemy.position[1] - self.ally.position[1],
-            #                             enemy.position[0] - self.ally.position[0])
-            # normalized_angle_to_enemy = (angle_to_enemy + np.pi) / (2 * np.pi)
-
-            enemies_obs.extend([normalized_dist_to_enemy])#, normalized_angle_to_enemy])
+            enemies_obs.extend([normalized_dist_to_enemy])
 
         return np.concatenate([go_and_return_obs, np.array(enemies_obs, dtype=np.float32)])
 
