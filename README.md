@@ -19,7 +19,13 @@ git clone https://github.com/kgeerlings/ARES.git
 cd ARES
 ```
 
-Then, install the project requirements, and the project library itself.
+Then, create your virtual environment:
+```bash
+python3 -m venv ares_env
+source ares_env/bin/activate
+```
+
+Finally, install the project requirements, and the project library itself.
 ```bash
 pip install -r requirements.txt
 pip install -e .
