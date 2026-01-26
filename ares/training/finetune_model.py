@@ -208,7 +208,6 @@ class FineTuner:
             truncated_count = batch["next", "truncated"].sum().item()
 
             # Count episodes where ally reached target (transitions from 0 to 1)
-            # Assuming the observation contains ally_reached_target at index 2
             current_ally_reached = batch["next", "observation"][:, 2]
             prev_ally_reached = batch["observation"][:, 2]
             # Count when it transitions from 0 (or False) to 1 (True)

@@ -21,7 +21,7 @@ if critic is not None:
     critic(td_reset)
 
 
-# Collector setup ======================
+# Collector setup
 collector = SyncDataCollector(
     create_env_fn=lambda: ParallelEnv(10, create_env, mp_start_method="fork"),
     policy=policy,

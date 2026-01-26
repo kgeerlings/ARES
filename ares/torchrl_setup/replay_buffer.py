@@ -12,5 +12,5 @@ storage = LazyTensorStorage(frames_per_batch, device="cpu")
 buffer = ReplayBuffer(
     storage=storage,  # We store the frames_per_batch collected at each iteration
     sampler=sampler,
-    batch_size=minibatch_size,  # We will sample minibatches of this size
+    batch_size=minibatch_size,
 )

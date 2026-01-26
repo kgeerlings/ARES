@@ -7,7 +7,6 @@ from torchrl.envs.libs.gym import GymWrapper
 from torchrl.envs import ParallelEnv
 
 
-# Go to target environment
 def create_env():
     if GlobalVariables.CONFIG==0:
         base_env = DodgingEnemiesEnvWrapper(config=config)

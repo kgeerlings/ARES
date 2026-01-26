@@ -239,20 +239,6 @@ class Evaluator:
 
 if __name__ == "__main__":
 
-    # eval = Evaluator()
-
-    # checkpoints = [
-    #     "checkpoints/checkpoint_iter_9900.pt",
-    #     "ares/models/1_ally_go_to_target.pt",
-    #     "ares/models/2_ally_go_to_target_and_return_to_base.pt",
-    #     "ares/models/3_ally_semi_dodges_enemies.pt",
-    #     "ares/models/3.1_ally_tries_to_dodge_enemies.pt",
-    #     "ares/models/3.2_ally_dodges_enemies.pt",]
-
-    # checkpoint_path = checkpoints[5]    
-    
-    # eval.run(checkpoint_path, record=False)
-
     eval = Evaluator(3, configuration=config)
 
     checkpoints = [

@@ -128,7 +128,6 @@ class Trainer:
             truncated_count = batch["next", "truncated"].sum().item()
 
             # Count episodes where ally reached target
-            # Assuming the observation contains ally_reached_target at index 2
             ally_reached_target_count = batch["next", "observation"][:, 2].sum().item()
 
             # Calculate explained variance
