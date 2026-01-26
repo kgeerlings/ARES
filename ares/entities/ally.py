@@ -7,7 +7,11 @@ class Ally(Entity):
     def __init__(self, ally_config=None):
         super().__init__()
         self.config = ally_config if ally_config else {}
-        self.init_position = np.array(self.config.get("initial_position", [100, 100]), dtype=np.float32)
+        # self.init_position = np.array(self.config.get("initial_position", [100, 100]), dtype=np.float32)
+        self.init_position = np.array([
+            np.random.uniform(50, 200),
+            np.random.uniform(100, 650)
+        ], dtype=np.float32)
         # random position
         # self.init_position = np.array([
         #     np.random.uniform(100, 1175),
@@ -17,7 +21,11 @@ class Ally(Entity):
         self.color = self.config.get("color", [0, 255, 0])
 
     def reset(self):
-        self.init_position = np.array(self.config.get("initial_position", [100, 100]), dtype=np.float32)
+        # self.init_position = np.array(self.config.get("initial_position", [100, 100]), dtype=np.float32)
+        self.init_position = np.array([
+            np.random.uniform(50, 200),
+            np.random.uniform(100, 650)
+        ], dtype=np.float32)
         # self.init_position = np.array([
         #     np.random.uniform(100, 1175),
         #     np.random.uniform(100, 650)

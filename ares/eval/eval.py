@@ -6,6 +6,8 @@ import torch
 from tensordict import TensorDict
 from torchrl.envs.utils import set_exploration_type, ExplorationType
 from ares.environment.base_env import BaseEnv
+from ares.environment.dodging_enemies_env_wrapper import DodgingEnemiesEnvWrapper
+from ares.environment.go_and_return_env_wrapper import GoAndReturnEnvWrapper
 from config.config import config
 from ares.torchrl_setup.policy import policy
 from ares.torchrl_setup.hyperparameters_and_setup import device
@@ -13,9 +15,10 @@ from ares.torchrl_setup.hyperparameters_and_setup import device
 class Evaluator:
     """Class to evaluate a trained RL agent."""
 
-    def __init__(self, config=config, policy=policy, device=device) -> None:
+    def __init__(self, env_choice, configuration, policy=policy, device=device) -> None:
         """
         Args:
+            env_choice (str): Choice of the environment to evaluate (1, 2 or 3).
             config (dict): Configuration for the environment.
             policy (torch.nn.Module): The policy model to evaluate.
             device (torch.device): Device to run the evaluation on.
@@ -23,14 +26,23 @@ class Evaluator:
             Returns:
                 None
         """
-        self.config = config
+
+        self.env_choice = env_choice
+        self.config = configuration
         self.policy = policy
         self.device = device
 
 
     def _create_env(self):
         """Creates an environment for evaluation."""
-        return BaseEnv(config=self.config)
+        if self.env_choice==1:
+            return BaseEnv(config=self.config)
+        elif self.env_choice==2:
+            return GoAndReturnEnvWrapper(config=self.config)
+        elif self.env_choice==3:
+            return DodgingEnemiesEnvWrapper(config=self.config)
+        else:
+            raise ValueError(f"Unknown environment choice: {self.env_choice}")
 
 
     @staticmethod
@@ -227,7 +239,21 @@ class Evaluator:
 
 if __name__ == "__main__":
 
-    eval = Evaluator()
+    # eval = Evaluator()
+
+    # checkpoints = [
+    #     "checkpoints/checkpoint_iter_9900.pt",
+    #     "ares/models/1_ally_go_to_target.pt",
+    #     "ares/models/2_ally_go_to_target_and_return_to_base.pt",
+    #     "ares/models/3_ally_semi_dodges_enemies.pt",
+    #     "ares/models/3.1_ally_tries_to_dodge_enemies.pt",
+    #     "ares/models/3.2_ally_dodges_enemies.pt",]
+
+    # checkpoint_path = checkpoints[5]    
+    
+    # eval.run(checkpoint_path, record=False)
+
+    eval = Evaluator(3, configuration=config)
 
     checkpoints = [
         "checkpoints/checkpoint_iter_9900.pt",

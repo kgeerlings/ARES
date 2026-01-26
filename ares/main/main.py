@@ -1,7 +1,5 @@
 import argparse
-from ares.training.train import Trainer
-from ares.training.finetune_model import FineTuner
-from ares.eval.eval import Evaluator
+from ares.main.global_variables import GlobalVariables
 
 def parse_args():
     """
@@ -15,6 +13,15 @@ def parse_args():
         required=True,
         choices=["train", "finetune", "eval"],
         help="Type of operation to perform: train, finetune, or eval.",
+    )
+
+    # Configuration choice
+    parser.add_argument(
+        "--config",
+        type=int,
+        choices=[0, 1, 2, 3],
+        default=0,
+        help="Configuration model to use (0, 1, 2, or 3). Corresponds to config, config_model_1, config_model_2, or config_model_3.",
     )
 
     # Hyperparameters (optional)
@@ -46,6 +53,19 @@ def main():
     """
     args = parse_args()
 
+    # Select configuration based on --config argument
+    from config.config import config, config_model_1, config_model_2, config_model_3
+    
+    config_map = {
+        0: config,
+        1: config_model_1,
+        2: config_model_2,
+        3: config_model_3,
+    }
+    selected_config = config_map[args.config]
+    print(f"Using configuration: config_model_{args.config}")
+    GlobalVariables.CONFIG = args.config
+
     # Build hyperparameters dict from provided arguments
     hyperparams = {}
     if args.frames_per_batch is not None:
@@ -71,6 +91,7 @@ def main():
 
     if args.type == "train":
         print("Starting training...")
+        from ares.training.train import Trainer
         trainer = Trainer(**hyperparams)
         trainer.train()
 
@@ -79,6 +100,7 @@ def main():
             print("Error: --checkpoint-path is required for fine-tuning.")
             return
         print(f"Starting fine-tuning from checkpoint: {args.checkpoint_path}")
+        from ares.training.finetune_model import FineTuner
         finetuner = FineTuner(**hyperparams)
         finetuner.train()
 
@@ -87,7 +109,8 @@ def main():
             print("Error: --checkpoint-path is required for evaluation.")
             return
         print(f"Starting evaluation from checkpoint: {args.checkpoint_path}")
-        evaluator = Evaluator()
+        from ares.eval.eval import Evaluator
+        evaluator = Evaluator(env_choice=args.config, configuration=selected_config)
         evaluator.run(
             checkpoint_path=args.checkpoint_path,
             num_episodes=args.num_episodes,

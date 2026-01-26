@@ -1,19 +1,28 @@
-from config.config import hyperparameters_and_setup
+from ares.main.global_variables import GlobalVariables
 
-max_grad_norm = hyperparameters_and_setup.get("max_grad_norm", 0.5)
-clip_epsilon = hyperparameters_and_setup.get("clip_epsilon", 0.2)
-entropy_coef = hyperparameters_and_setup.get("entropy_coef", 0.0001)
-critic_coef = hyperparameters_and_setup.get("critic_coef", 0.5)
-loss_critic_type = hyperparameters_and_setup.get("loss_critic_type", "l2")
-normalize_advantage = hyperparameters_and_setup.get("normalize_advantage", True)
-gamma = hyperparameters_and_setup.get("gamma", 0.99)
-lmbda = hyperparameters_and_setup.get("lmbda", 0.95)
-use_entropy_loss = hyperparameters_and_setup.get("use_entropy_loss", True)
-learning_rate = hyperparameters_and_setup.get("learning_rate", 0.0001)
-num_epochs = hyperparameters_and_setup.get("num_epochs", 10)
-device = hyperparameters_and_setup.get("device", "cpu")
-num_cells = hyperparameters_and_setup.get("num_cells", 64)
-num_cells_critic = hyperparameters_and_setup.get("num_cells_critic", 64)
-frames_per_batch = hyperparameters_and_setup.get("frames_per_batch", 1000)
-minibatch_size = hyperparameters_and_setup.get("minibatch_size", 64)
-total_frames = hyperparameters_and_setup.get("total_frames", 6000000)
+if GlobalVariables.CONFIG == 0:
+    from config.config import config
+elif GlobalVariables.CONFIG == 1:
+    from config.config import config_model_1 as config
+elif GlobalVariables.CONFIG == 2:
+    from config.config import config_model_2 as config
+elif GlobalVariables.CONFIG == 3:
+    from config.config import config_model_3 as config
+
+max_grad_norm = config["hyperparameters_and_setup"]["max_grad_norm"]
+clip_epsilon = config["hyperparameters_and_setup"]["clip_epsilon"]
+entropy_coef = config["hyperparameters_and_setup"]["entropy_coef"]
+critic_coef = config["hyperparameters_and_setup"]["critic_coef"]
+loss_critic_type = config["hyperparameters_and_setup"]["loss_critic_type"]
+normalize_advantage = config["hyperparameters_and_setup"]["normalize_advantage"]
+gamma = config["hyperparameters_and_setup"]["gamma"]
+lmbda = config["hyperparameters_and_setup"]["lmbda"]
+use_entropy_loss = config["hyperparameters_and_setup"]["use_entropy_loss"]
+learning_rate = config["hyperparameters_and_setup"]["learning_rate"]
+num_epochs = config["hyperparameters_and_setup"]["num_epochs"]
+device = config["hyperparameters_and_setup"]["device"]
+num_cells = config["hyperparameters_and_setup"]["num_cells"]
+num_cells_critic = config["hyperparameters_and_setup"]["num_cells_critic"]
+frames_per_batch = config["hyperparameters_and_setup"]["frames_per_batch"]
+minibatch_size = config["hyperparameters_and_setup"]["minibatch_size"]
+total_frames = config["hyperparameters_and_setup"].get("total_frames", 6000000)

@@ -89,9 +89,9 @@ class GoAndReturnEnvWrapper(BaseEnv):
                                               normalized_angle_to_base], dtype=np.float32)])
 
 
-    def reset(self, seed=None, options=None):
+    def reset(self, seed=None):
         """Reset the environment to the initial state."""
-        observation, info = super().reset(seed=seed, options=options)
+        observation, info = super().reset(seed=seed)
 
         self.base_area.reset(ally_init_position=self.ally.init_position)
 

@@ -6,7 +6,6 @@ from torchrl.modules import ProbabilisticActor, TanhNormal
 from ares.torchrl_setup.environment import env
 from ares.torchrl_setup.hyperparameters_and_setup import num_cells, device
 
-# Device setup
 
 policy_net = nn.Sequential(
     nn.Linear(env.observation_spec["observation"].shape[-1], num_cells, device=device),

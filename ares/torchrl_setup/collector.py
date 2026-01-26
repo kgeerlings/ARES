@@ -19,8 +19,6 @@ if policy is not None:
     policy(td_reset)
 if critic is not None:
     critic(td_reset)
-print(f"Agent policy: ", policy)
-print(f"Agent critic: ", critic)
 
 
 # Collector setup ======================
