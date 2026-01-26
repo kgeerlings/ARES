@@ -6,7 +6,6 @@ from ares.entities.ally import Ally
 from ares.entities.enemy import Enemy
 from ares.entities.target import Target
 from ares.entities.entity import Entity
-from ares.entities.base_area import BaseArea
 
 class BaseEnv(gym.Env):
     """Base class for the environment."""
@@ -34,25 +33,17 @@ class BaseEnv(gym.Env):
         self.reward = 0
 
         # For reward shaping
-        self.prev_distance_to_target = None
-        self.prev_distance_to_base = None
+        self.prev_distance = None
         self.prev_angle = None
-        self.target_reward_reached = 0
-        self.base_reward_reached = 0
 
         # Spaces
         self.action_space = Box(low=0.0, high=1.0, shape=(2,), dtype=np.float32) # Two action (angle and velocity)
-        self.observation_space = Box(low=-1.0, high=1.0, shape=(7,), dtype=np.float32) # Determine the shape according to the observations decided
-        # For the first version, two observations: pos_to_target (dist), angle_to_target
-        # For the second version, wee add three observations: bool_target_reached, pos_to_base, angle_to_base
-        self.ally_reached_target = False
-        # For the third version, we add two observations: pos_to_enemy_1, pos_to_enemy_2
+        self.observation_space = Box(low=-1.0, high=1.0, shape=(2,), dtype=np.float32) # Determine the shape according to the observations decided
 
         # Entities
         self.ally = Ally(self.ally_config)
         self.enemies = [Enemy(self.enemy_config) for _ in range(self.env_config.get("num_enemies", 1))]
         self.target = Target(self.target_config)
-        self.base_area = BaseArea(self.target_config, ally_init_position=self.ally.position)
 
     def _collides_with(self, entity_1: Entity, entity_2: Entity) -> bool:
         """
@@ -70,66 +61,20 @@ class BaseEnv(gym.Env):
         distance = np.linalg.norm(agent_pos - target_pos)
         return distance < (entity_1.radius + entity_2.radius)
 
-    def _reward_shape_reaching_target(self):
-        """Define the shape of the reward when the ally tries to reach the target."""
+    def _reward_shape(self):
+        """Define the shape of the reward."""
 
         # Distance difference
         dist_to_target = np.linalg.norm(self.ally.position - self.target.position)
-        distance_difference = self.prev_distance_to_target - dist_to_target if self.prev_distance_to_target is not None else 0
-        self.prev_distance_to_target = dist_to_target
+        distance_difference = self.prev_distance - dist_to_target if self.prev_distance is not None else 0
+        self.prev_distance = dist_to_target
 
         distance_max = np.linalg.norm(np.array([self.width, self.height]))
 
         normalized_distance_difference = distance_difference / distance_max
 
-        return normalized_distance_difference * 10
-    
-    def _reward_shape_returning_to_base(self):
-        """Define the shape of the reward when the ally tries to return to the base area."""
+        return normalized_distance_difference
 
-        # Distance difference
-        dist_to_base = np.linalg.norm(self.ally.position - self.base_area.position)
-        distance_difference = self.prev_distance_to_base - dist_to_base if self.prev_distance_to_base is not None else 0
-        self.prev_distance_to_base = dist_to_base
-
-        distance_max = np.linalg.norm(np.array([self.width, self.height]))
-
-        normalized_distance_difference = distance_difference / distance_max
-
-        return normalized_distance_difference * 10
-    
-    def _reward_shape_for_enemies_avoidance(self):
-        """Define the shape of the reward for avoiding enemies.
-        If an enemy is closer to the ally than 300 pixels, the reward is negative.
-        The farther the enemy is, the higher the reward."""
-        reward = 0
-        for enemy in self.enemies:
-            dist_to_enemy = np.linalg.norm(self.ally.position - enemy.position)
-            if dist_to_enemy < 50:
-                reward -= ((50 - dist_to_enemy) / 50) * 0.06  # Negative reward when too close
-            if dist_to_enemy < self.ally.radius + enemy.radius:
-                reward -= 3  # Collision penalty
-        return reward / len(self.enemies) # Average reward over all enemies
-    
-    def _reward_shape(self):
-        """Define the shape of the reward based on the current state."""
-
-        reaching_target_reward = 0
-        reaching_base_reward = 0
-        time_penalty = -0.03  # Small negative reward at each step to encourage faster completion
-
-        if self.target_reward_reached==0 and self._collides_with(self.ally, self.target):
-            reaching_target_reward += 5
-            self.target_reward_reached = 1
-        if self.base_reward_reached==0 and self.ally_reached_target and self._collides_with(self.ally, self.base_area):
-            reaching_base_reward += 5
-            self.base_reward_reached = 1
-
-        if self.ally_reached_target:
-            return self._reward_shape_returning_to_base()+self._reward_shape_for_enemies_avoidance()+reaching_base_reward+time_penalty
-        else:
-            return self._reward_shape_reaching_target()+self._reward_shape_for_enemies_avoidance()+reaching_target_reward+time_penalty
-            # return 0
 
     def _get_observation(self):
         """
@@ -138,12 +83,10 @@ class BaseEnv(gym.Env):
         Returns:
             np.ndarray: The current observation.
         """
-        distance_max =  np.linalg.norm(np.array([self.width, self.height]))
-
-        # === First model ===
 
         # Normalized distance between ally and target
         dist_to_target = np.linalg.norm(self.ally.position - self.target.position)
+        distance_max =  np.linalg.norm(np.array([self.width, self.height]))
         normalized_dist_to_target = dist_to_target / distance_max
 
         # Angle between ally and target
@@ -151,32 +94,8 @@ class BaseEnv(gym.Env):
                                       self.target.position[0] - self.ally.position[0])
         normalized_angle_to_target = (angle_to_target + np.pi) / (2 * np.pi)
 
-        # === Second model ===
-
-        # Boolean indicating if the ally has reached the target
-        if not self.ally_reached_target and self._collides_with(self.ally, self.target):
-            self.ally_reached_target = True
-            # print("========================================== TARGET REACHED ==========================================")
-
-        # Normalized distance between ally and base area
-        dist_to_base = np.linalg.norm(self.ally.position - self.base_area.position)
-        normalized_dist_to_base = dist_to_base / distance_max
-
-        # Angle between ally and base area
-        angle_to_base = np.arctan2(self.base_area.position[1] - self.ally.position[1],
-                                     self.base_area.position[0] - self.ally.position[0])
-        normalized_angle_to_base = (angle_to_base + np.pi) / (2 * np.pi)
-
-        # === Third model ===
-        enemy_distances = []
-        for enemy in self.enemies:
-            dist_to_enemy = np.linalg.norm(self.ally.position - enemy.position)
-            normalized_dist_to_enemy = dist_to_enemy / distance_max
-            enemy_distances.append(normalized_dist_to_enemy)
-
-        return np.array([normalized_dist_to_target, normalized_angle_to_target, self.ally_reached_target,
-                        normalized_dist_to_base, normalized_angle_to_base] + enemy_distances, dtype=np.float32)
-                        
+        return np.array([normalized_dist_to_target, normalized_angle_to_target], dtype=np.float32)
+    
 
     def reset(self, seed: int = None):
         """
@@ -201,17 +120,14 @@ class BaseEnv(gym.Env):
             if self._collides_with(enemy, self.target):
                 enemy.reset()
         self.target.reset()
-        self.base_area.reset(ally_init_position=self.ally.init_position)
 
         # Reset environment state
         self.truncated = False
         self.terminated = False
         self.n_steps = 0
         self.reward = 0
-        self.prev_distance_to_target = None
-        self.prev_distance_to_base = None
+        self.prev_distance = None
         self.prev_angle = None
-        self.ally_reached_target = False
 
         return self._get_observation(), {}
 
@@ -232,8 +148,7 @@ class BaseEnv(gym.Env):
         Returns:
             bool: True if the episode is terminated, False otherwise.
         """
-        self.terminated = self._collides_with(self.ally, self.base_area) and self.ally_reached_target
-        # self.terminated = self.ally_reached_target
+        self.terminated = self._collides_with(self.ally, self.target)
         return self.terminated
 
     def _is_done(self):
@@ -281,7 +196,7 @@ class BaseEnv(gym.Env):
         """Close the environment."""
         cv2.destroyAllWindows()
 
-    def render(self, mode: str = "human"):
+    def render(self, mode: str = "rgb_array"):
         """
         Render the environment.
 
@@ -296,26 +211,10 @@ class BaseEnv(gym.Env):
         for enemy in self.enemies:
             enemy.render(window)
         self.target.render(window)
-        self.base_area.render(window)
 
-        if mode == "rgb_array":
-            # Convert BGR (OpenCV) to RGB and return the array
-            rgb_array = cv2.cvtColor(window, cv2.COLOR_BGR2RGB)
-            return rgb_array
-        elif mode == "human":
-            # Display the window for human viewing
-            cv2.namedWindow(window_name)
-            cv2.imshow(window_name, window)
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                self.close()
-            return None
-        else:
-            # Default behavior (for backward compatibility)
-            cv2.namedWindow(window_name)
-            cv2.imshow(window_name, window)
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                self.close()
-            return None
+        cv2.imshow(window_name, window)
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            self.close()
 
     
 
@@ -329,8 +228,6 @@ if __name__ == "__main__":
     env.render()
     while not done:
         action = env.action_space.sample()  # Random action
-        # action = np.array([0.0, 0.1], dtype=np.float32) # Test with movement to the right
         obs, reward, terminated, truncated, info = env.step(action)
         done = terminated or truncated
         env.render()
-        # print(f"Step: {env.n_steps}, Action: {action}, Observation: {obs}, Reward: {reward}, Terminated: {terminated}, Truncated: {truncated}")
