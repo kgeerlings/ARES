@@ -44,33 +44,21 @@ class Enemy(Entity):
                 angle += 360
             self._move_angle(angle)
         else:
-            # # Patrol around initial position
-            # if np.linalg.norm(self.position - self.initial_position) > 400:
-            #     angle = np.degrees(np.arctan2(self.initial_position[1] - self.position[1],
-            #                                   self.initial_position[0] - self.position[0]))
-            #     if angle < 0:
-            #         angle += 360
-            #     self._move_angle(angle)
-            # else:
-            #     angle = np.random.uniform(0, 360)
-            #     self._move_angle(angle)
-
-            # --- patrouille circulaire fluide ---
             if not hasattr(self, "_patrol_angle"):
                 self._patrol_angle = np.random.uniform(0, 360)
             if not hasattr(self, "_patrol_dir"):
                 self._patrol_dir = np.random.choice([-1, 1])
 
-            # rayon et vitesse angulaire
+            # radius and angular speed of the patrol
             patrol_radius = 100
-            angular_speed = 1  # degrés par frame environ
+            angular_speed = 1  # degrees per frame
 
-            # mise à jour de l’angle
+            # update the angle
             self._patrol_angle = (self._patrol_angle + self._patrol_dir * angular_speed) % 360
 
-            # calcul de la position sur le cercle
+            # calculate the position on the circle
             new_x = self.initial_position[0] + patrol_radius * np.cos(np.radians(self._patrol_angle))
             new_y = self.initial_position[1] + patrol_radius * np.sin(np.radians(self._patrol_angle))
 
-            # déplacer l’ennemi directement vers cette position
+            # move the enemy directly to this position
             self.position = np.array([new_x, new_y])
