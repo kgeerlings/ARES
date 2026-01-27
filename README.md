@@ -16,11 +16,11 @@ ARES is based on reinforcement learning to enable an agent to navigate autonomou
 To install the project, first clone the repository:
 ```bash
 git clone https://github.com/kgeerlings/ARES.git
-cd ARES
 ```
-
+Or download and extract the archive if you don't want to go through github.
 Then, create your virtual environment:
 ```bash
+cd ARES
 python3 -m venv ares_env
 source ares_env/bin/activate
 ```
